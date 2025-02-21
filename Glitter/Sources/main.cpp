@@ -1,5 +1,6 @@
 // Local Headers
 #include "glitter.hpp"
+#include "animation.h"
 
 // System Headers
 #include <glad/glad.h>
@@ -8,6 +9,7 @@
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 
 int main(int argc, char * argv[]) {
 
@@ -30,6 +32,9 @@ int main(int argc, char * argv[]) {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+
+    Animation2D anim;
+    anim.load_frames("C:\\404\\Build\\Glitter\\Debug\\frames");
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
