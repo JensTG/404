@@ -24,6 +24,12 @@ unsigned int indices[] = {
 		1, 2, 3  // second triangle
 };
 
+int last_key_state[GLFW_KEY_LAST];
+
+Animation2D anim(0);
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 int main(int argc, char * argv[]) {
 
 	// ------------------------------------ Load GLFW and Create a Window ------------------------------------
@@ -45,6 +51,8 @@ int main(int argc, char * argv[]) {
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+
+	glfwSetKeyCallback(mWindow, key_callback);
 
 	// ------------------------------------ Setup OpenGL
 	unsigned int VAO, VBO, EBO;
@@ -71,23 +79,42 @@ int main(int argc, char * argv[]) {
 	glEnableVertexAttribArray(2);
 
 	// ------------------------------------ Setup anims and shaders
-	Animation2D anim(GL_TEXTURE0);
 	Shader program("C:\\404\\Glitter\\Shaders\\anim.v", "C:\\404\\Glitter\\Shaders\\anim.f");
 
 	anim.load_frames("C:\\404\\Glitter\\Frames");
+	anim.bind(program);
 
 	// ------------------------------------ Rendering Loop ------------------------------------
 	while (glfwWindowShouldClose(mWindow) == false) {
-		if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(mWindow, true);
-
 		// Background Fill Color
 		glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		// Render
+		program.use();
+		anim.bind(program);
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		// Flip Buffers and Draw
 		glfwSwapBuffers(mWindow);
 		glfwPollEvents();
 	}   glfwTerminate();
 	return EXIT_SUCCESS;
+}
+
+// Register input and single-click funcs
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS && mods == GLFW_MOD_CONTROL)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		anim.change(1);
+
+	last_key_state[key] = action;
+}
+
+// Held keys
+void processInput(GLFWwindow* window) {
 }
