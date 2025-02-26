@@ -6,6 +6,8 @@
 // System Headers
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <chrono>
+using namespace chrono;
 
 // Standard Headers
 #include <cstdio>
@@ -27,8 +29,11 @@ unsigned int indices[] = {
 int last_key_state[GLFW_KEY_LAST];
 
 Animation2D anim(0);
+steady_clock::time_point prev_time = steady_clock::now();
+duration<double, milli> tick_dur(16);
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void tick();
 
 int main(int argc, char * argv[]) {
 
@@ -96,6 +101,13 @@ int main(int argc, char * argv[]) {
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+		// Tick
+		steady_clock::time_point now = steady_clock::now();
+		if ((now - prev_time) > tick_dur) {
+			prev_time = now;
+			tick();
+		}
+
 		// Flip Buffers and Draw
 		glfwSwapBuffers(mWindow);
 		glfwPollEvents();
@@ -117,4 +129,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 // Held keys
 void processInput(GLFWwindow* window) {
+}
+
+// Make things happen
+void tick() {
+	anim.change(1);
 }

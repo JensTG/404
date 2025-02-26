@@ -20,7 +20,6 @@ public:
 			new_tex.Load(filepath.c_str());
 			frames.push_back(new_tex);
 		}
-		
 	}
 
 	void bind(Shader program) {
@@ -53,7 +52,18 @@ public:
 
 private:
 	vector<Texture2D> frames;
+	vector<string> frame_paths;
 	unsigned int texture_num;
 	int current = 0;
+
+	vector<string> get_sorted_paths(string path) {
+		vector<string> paths;
+		string dir;
+		string ext;
+		for (directory_entry file : directory_iterator(path)) {
+			paths.push_back(file.path());
+		}
+
+	}
 
 };
