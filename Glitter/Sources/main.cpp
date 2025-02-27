@@ -30,7 +30,7 @@ int last_key_state[GLFW_KEY_LAST];
 
 Animation2D anim(0);
 steady_clock::time_point prev_time = steady_clock::now();
-duration<double, milli> tick_dur(16);
+duration<double, milli> tick_dur(1000/10);
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void tick();
@@ -58,6 +58,7 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	glfwSetKeyCallback(mWindow, key_callback);
+	stbi_set_flip_vertically_on_load(true);
 
 	// ------------------------------------ Setup OpenGL
 	unsigned int VAO, VBO, EBO;

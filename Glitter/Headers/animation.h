@@ -3,6 +3,7 @@
 #include <texture.h>
 #include <filesystem>
 #include <vector>
+#include <map>
 #include <string>
 
 #include "shader.h"
@@ -14,10 +15,10 @@ using namespace filesystem;
 class Animation2D {
 public:
 	void load_frames(string path) {
-		for (directory_entry file : directory_iterator(path)) {
+		map<int, string> paths = get_sorted_paths(path);
+		for (const auto path : paths) {
 			Texture2D new_tex = Texture2D();
-			string filepath = file.path().string();
-			new_tex.Load(filepath.c_str());
+			new_tex.Load(path.second.c_str());
 			frames.push_back(new_tex);
 		}
 	}
@@ -56,14 +57,14 @@ private:
 	unsigned int texture_num;
 	int current = 0;
 
-	vector<string> get_sorted_paths(string path) {
-		vector<string> paths;
-		string dir;
-		string ext;
+	map<int, string> get_sorted_paths(string path) {
+		map<int, string> paths;
 		for (directory_entry file : directory_iterator(path)) {
-			paths.push_back(file.path());
+			string path = file.path().string();
+			int index = stoi(file.path().stem().string());
+			paths.insert({ index, path });
 		}
-
+		return paths;
 	}
 
 };
