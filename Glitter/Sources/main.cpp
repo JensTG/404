@@ -2,6 +2,7 @@
 #include "glitter.hpp"
 #include "animation.h"
 #include "shader.h"
+#include "registering.h"
 
 // System Headers
 #include <glad/glad.h>

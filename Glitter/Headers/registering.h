@@ -1,5 +1,9 @@
 #pragma once
 
+#include "shader.h"
+#include "animation.h"
+#include "texture.h"
+
 #include <glm/glm.hpp>
 using namespace glm;
 
@@ -15,9 +19,19 @@ typedef int ScreenItemFlags;
 enum ScreenItemFlags_ {
 	ScreenItemFlags_Draggable = 0,
 	ScreenItemFlags_Clickable = 1 << 0,
-	ScreenItemFlags_
+	ScreenItemFlags_Visible = 1 << 1
 };
 
+static vector<ScreenItem> screen_space;
+
 class ScreenItem {
-	static vector<Placement> screen
+	Placement pos;
+
+	Shader* program;
+	int VAO;
+
+
+	void render() {
+
+	}
 };
