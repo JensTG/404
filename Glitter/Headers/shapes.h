@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <vector>
 using namespace std;
 
 typedef int VAO;

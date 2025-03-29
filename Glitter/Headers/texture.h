@@ -2,6 +2,7 @@
 #define TEXTURE_H
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <iostream>
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION

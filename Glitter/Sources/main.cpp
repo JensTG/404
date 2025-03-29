@@ -17,10 +17,10 @@ using namespace chrono;
 
 float vertices[] = {
 	// positions          // colors           // texture coords
-	 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-	 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-	-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-	-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left  
+	 1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+	 1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+	-1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+	-1.0f,  1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left  
 };
 unsigned int indices[] = {
 		0, 1, 3, // first triangle
@@ -28,8 +28,10 @@ unsigned int indices[] = {
 };
 
 int last_key_state[GLFW_KEY_LAST];
+static vector<ScreenItem*> screen_space;
 
-Animation2D anim(0);
+Animation2D small_head(0);
+Animation2D body(1);
 steady_clock::time_point prev_time = steady_clock::now();
 duration<double, milli> tick_dur(1000/10);
 
@@ -90,9 +92,17 @@ int main(int argc, char * argv[]) {
 	// ------------------------------------ Setup anims and shaders
 	Shader program("C:\\404\\Glitter\\Shaders\\anim.v", "C:\\404\\Glitter\\Shaders\\anim.f");
 
-	anim.load_frames("C:\\404\\Glitter\\Frames");
-	anim.bind(program);
+	body.program = &program;
+	body.VAO = VAO;
 
+	body.load_frames("C:\\404\\Glitter\\Frames\\body", true);
+	screen_space.push_back(&body);
+
+	small_head.program = &program;
+	small_head.VAO = VAO;
+
+	small_head.load_frames("C:\\404\\Glitter\\Frames\\small_head", true);
+	screen_space.push_back(&small_head);
 	// ------------------------------------ Rendering Loop ------------------------------------
 	while (glfwWindowShouldClose(mWindow) == false) {
 		// Background Fill Color
@@ -100,10 +110,10 @@ int main(int argc, char * argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Render
-		program.use();
-		anim.bind(program);
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		for (ScreenItem* item : screen_space) {
+			if (item->visible)
+				item->render(mWindow);
+		}
 
 		// Tick
 		steady_clock::time_point now = steady_clock::now();
@@ -126,7 +136,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS && mods == GLFW_MOD_CONTROL)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		anim.change(1);
+		small_head.change(1);
 
 	last_key_state[key] = action;
 }
@@ -137,5 +147,6 @@ void processInput(GLFWwindow* window) {
 
 // Make things happen
 void tick() {
-	anim.change(1);
+	small_head.change();
+	body.change();
 }
