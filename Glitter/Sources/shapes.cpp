@@ -1,4 +1,5 @@
 #include "shapes.h"
+#include "array"
 
 VAO load_shape(const char* file_path) {
 	ifstream sf;
@@ -21,6 +22,23 @@ VAO load_shape(const char* file_path) {
 	catch (exception e) {
 		cout << "ERROR::SHAPE::FILE\n" << e.what();
 		return -1;
+	}
+
+	// Read through lines
+	char c;
+	float f;
+	while (ss.get()) {
+		switch (c)
+		{
+		case 'v':
+			break;
+		case 'i':
+			while (ss >> f)
+
+			break;
+		default:
+			break;
+		}
 	}
 
 	return 0;

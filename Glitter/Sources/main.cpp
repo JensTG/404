@@ -35,7 +35,9 @@ Animation2D body(1);
 steady_clock::time_point prev_time = steady_clock::now();
 duration<double, milli> tick_dur(1000/10);
 
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+ScreenItem* identify_stuff(double x, double y);
 void tick();
 
 int main(int argc, char * argv[]) {
@@ -62,6 +64,7 @@ int main(int argc, char * argv[]) {
 	gladLoadGL();
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
+	glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
 	glfwSetKeyCallback(mWindow, key_callback);
 	stbi_set_flip_vertically_on_load(true);
 
@@ -98,22 +101,25 @@ int main(int argc, char * argv[]) {
 	body.load_frames("C:\\404\\Glitter\\Frames\\body", true);
 	screen_space.push_back(&body);
 
+	
 	small_head.program = &program;
 	small_head.VAO = VAO;
 
 	small_head.load_frames("C:\\404\\Glitter\\Frames\\small_head", true);
 	screen_space.push_back(&small_head);
+
+	body.pos.y += 100;
+	
 	// ------------------------------------ Rendering Loop ------------------------------------
 	while (glfwWindowShouldClose(mWindow) == false) {
 		// Background Fill Color
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Render
-		for (ScreenItem* item : screen_space) {
-			if (item->visible)
-				item->render(mWindow);
-		}
+		// Render (backwards to match priority)
+		for (int i = screen_space.size() - 1; i >= 0; i--)
+			if (screen_space[i]->visible)
+				screen_space[i]->render(mWindow);
 
 		// Tick
 		steady_clock::time_point now = steady_clock::now();
@@ -141,6 +147,19 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	last_key_state[key] = action;
 }
 
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+
+	cout << "Mouseclick: " << xpos << ", " << ypos << '\n';
+
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		ScreenItem* item = identify_stuff(xpos, ypos);
+		if (item != NULL)
+			item->clicked(window, xpos, ypos);
+	}
+}
+
 // Held keys
 void processInput(GLFWwindow* window) {
 }
@@ -149,4 +168,13 @@ void processInput(GLFWwindow* window) {
 void tick() {
 	small_head.change();
 	body.change();
+}
+
+// Find the box
+ScreenItem* identify_stuff(double x, double y) {
+	for (ScreenItem* item : screen_space) {
+		if (x >= item->pos.x && x <= (item->pos.x + item->size.x) && y >= item->pos.y && y <= (item->pos.y + item->size.y))
+			return item;
+	}
+	return NULL;
 }
