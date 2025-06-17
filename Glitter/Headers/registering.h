@@ -45,25 +45,12 @@ public:
 		glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
 	}
 
-	void clicked(GLFWwindow* window, double x, double y) {
+	virtual void clicked(double x, double y) { // To be defined
 		pos.x += 20;
-		
-		/*
-		if ((flags & ScreenItemFlags_Clickable) == ScreenItemFlags_Clickable)
-			click_func(window, x, y);
-		*/
 	}
 
-	void dragged(GLFWwindow* window, double dx, double dy) {
-		if ((flags & ScreenItemFlags_Dragable) == ScreenItemFlags_Dragable)
-			click_func(window, dx, dy);
+	virtual void dragged(double dx, double dy) { // For dragging self
+		pos.x += dx;
+		pos.y += dy;
 	}
-
-	void assign_click_func(void (*func)(GLFWwindow* window, double x, double y)) {
-		click_func == func;
-	}
-
-private:
-	void (*click_func)(GLFWwindow* window, double x, double y) = NULL;
-	void (*drag_func)(GLFWwindow* window, double dx, double dy) = NULL;
 };

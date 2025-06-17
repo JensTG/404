@@ -28,7 +28,11 @@ unsigned int indices[] = {
 };
 
 int last_key_state[GLFW_KEY_LAST];
+int last_mouse_button_state[GLFW_MOUSE_BUTTON_LAST];
+vec2 last_mouse_pos;
+vec2 last_click_pos;
 static vector<ScreenItem*> screen_space;
+ScreenItem* clicked_item = NULL;
 
 Animation2D small_head(0);
 Animation2D body(1);
@@ -36,6 +40,7 @@ steady_clock::time_point prev_time = steady_clock::now();
 duration<double, milli> tick_dur(1000/10);
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 ScreenItem* identify_stuff(double x, double y);
 void tick();
@@ -64,6 +69,7 @@ int main(int argc, char * argv[]) {
 	gladLoadGL();
 	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
+	glfwSetCursorPosCallback(mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
 	glfwSetKeyCallback(mWindow, key_callback);
 	stbi_set_flip_vertically_on_load(true);
@@ -147,17 +153,32 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	last_key_state[key] = action;
 }
 
+void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
+	vec2 current_mouse_pos = vec2(xpos, ypos);
+	if (current_mouse_pos != last_mouse_pos && clicked_item != NULL) {
+		clicked_item->dragged(current_mouse_pos.x - last_mouse_pos.x, current_mouse_pos.y - last_mouse_pos.y);
+	}
+	
+	last_mouse_pos = vec2(xpos, ypos);
+}
+
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);
 
-	cout << "Mouseclick: " << xpos << ", " << ypos << '\n';
-
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		ScreenItem* item = identify_stuff(xpos, ypos);
-		if (item != NULL)
-			item->clicked(window, xpos, ypos);
+		last_click_pos = vec2(xpos, ypos);
+		clicked_item = identify_stuff(xpos, ypos);
 	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		if (clicked_item != NULL && distance(last_click_pos, vec2(xpos, ypos)) < 10) {
+			clicked_item->pos += last_click_pos - vec2(xpos, ypos);
+			clicked_item->clicked(xpos, ypos);
+		}
+		clicked_item = NULL;
+	}
+
+	last_mouse_button_state[button] == action;
 }
 
 // Held keys
