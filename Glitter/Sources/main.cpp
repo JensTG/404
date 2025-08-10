@@ -34,29 +34,35 @@ vec2 last_click_pos;
 static vector<ScreenItem*> screen_space;
 ScreenItem* clicked_item = NULL;
 
-Animation2D small_head(0);
-Animation2D body(1);
 steady_clock::time_point prev_time = steady_clock::now();
 duration<double, milli> tick_dur(1000/10);
 
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+static void window_resize_callback(GLFWwindow* window, int width, int height);
 ScreenItem* identify_stuff(double x, double y);
 void tick();
 
+// ---------------------------------------------------------- MAIN ----------------------------------------------------------
 int main(int argc, char * argv[]) {
-
-	// ------------------------------------ Load GLFW and Create a Window ------------------------------------
+	// ------------------------------------ Load GLFW and Create a Window
+	// Basic
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+	// Flavour
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-	auto mWindow = glfwCreateWindow(mWidth, mHeight, "OpenGL", nullptr, nullptr);
+
+	glfwWindowHint(GLFW_POSITION_X, 0);
+	glfwWindowHint(GLFW_POSITION_Y, 0);
+
+	auto mWindow = glfwCreateWindow(200, 200, "OpenGL", NULL, NULL);
 
 	// Check for Valid Context
 	if (mWindow == nullptr) {
@@ -72,6 +78,7 @@ int main(int argc, char * argv[]) {
 	glfwSetCursorPosCallback(mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(mWindow, mouse_button_callback);
 	glfwSetKeyCallback(mWindow, key_callback);
+	glfwSetWindowSizeCallback(mWindow, window_resize_callback);
 	stbi_set_flip_vertically_on_load(true);
 
 	// ------------------------------------ Setup OpenGL
@@ -98,34 +105,48 @@ int main(int argc, char * argv[]) {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	// ------------------------------------ Setup anims and shaders
-	Shader program("C:\\404\\Glitter\\Shaders\\anim.v", "C:\\404\\Glitter\\Shaders\\anim.f");
+	// ------------------------------------ Setup shaders
+	Shader anim_program("C:\\404\\Glitter\\Shaders\\anim.v", "C:\\404\\Glitter\\Shaders\\anim.f");
+	Shader solid_program("C:\\404\\Glitter\\Shaders\\solid.v", "C:\\404\\Glitter\\Shaders\\solid.f");
 
-	body.program = &program;
+	// ------------------------------------ ScreenItems
+	Animation2D small_head(0);
+	Animation2D body(1);
+	WindowBorderRight wbr(mWindow);
+
+	body.program = &anim_program;
 	body.VAO = VAO;
+	body.parent = mWindow;
 
 	body.load_frames("C:\\404\\Glitter\\Frames\\body", true);
-	screen_space.push_back(&body);
-
 	
-	small_head.program = &program;
+	small_head.program = &anim_program;
 	small_head.VAO = VAO;
+	small_head.parent = mWindow;
 
 	small_head.load_frames("C:\\404\\Glitter\\Frames\\small_head", true);
-	screen_space.push_back(&small_head);
 
 	body.pos.y += 100;
+
+	wbr.program = &solid_program;
+	wbr.VAO = VAO;
+
+	solid_program.setVec4("color", vec4(0.0f, 0.0f, 0.7f, 1.0f));
 	
-	// ------------------------------------ Rendering Loop ------------------------------------
+	//screen_space.push_back(&body);
+	//screen_space.push_back(&small_head);
+	screen_space.push_back(&wbr);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	// ------------------------------------ Rendering Loop
 	while (glfwWindowShouldClose(mWindow) == false) {
 		// Background Fill Color
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Render (backwards to match priority)
 		for (int i = screen_space.size() - 1; i >= 0; i--)
 			if (screen_space[i]->visible)
-				screen_space[i]->render(mWindow);
+				screen_space[i]->render();
 
 		// Tick
 		steady_clock::time_point now = steady_clock::now();
@@ -141,16 +162,19 @@ int main(int argc, char * argv[]) {
 	return EXIT_SUCCESS;
 }
 
+// ---------------------------------------------------------- CALLBACKS ----------------------------------------------------------
 // Register input and single-click funcs
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS && mods == GLFW_MOD_CONTROL)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		small_head.change(1);
 
 	last_key_state[key] = action;
+}
+
+static void window_resize_callback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
 }
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -181,14 +205,14 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 	last_mouse_button_state[button] == action;
 }
 
+// ---------------------------------------------------------- OTHER FUNCS ----------------------------------------------------------
 // Held keys
 void processInput(GLFWwindow* window) {
 }
 
 // Make things happen
 void tick() {
-	small_head.change();
-	body.change();
+	// Figure this out
 }
 
 // Find the box

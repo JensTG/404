@@ -55,9 +55,9 @@ public:
 		load_frames(path);
 	}
 
-	void render(GLFWwindow* window) override {
+	void render() override {
 		bind(program);
-		ScreenItem::render(window);
+		ScreenItem::render();
 	}
 
 private:

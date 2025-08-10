@@ -21,6 +21,8 @@ enum ScreenItemFlags_ {
 
 class ScreenItem {
 public:
+	GLFWwindow* parent = NULL;
+	
 	vec2 pos = vec2(0.0f); // Pixels, from upper left
 	vec2 size = vec2(0.0f); // In pixels
 
@@ -31,9 +33,12 @@ public:
 
 	int flags = 0;
 
-	virtual void render(GLFWwindow* window) {
+	virtual void render() {
+		if (parent == NULL)
+			return;
+
 		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
+		glfwGetWindowSize(parent, &width, &height);
 
 		mat4 transform(1.0f);
 		transform = translate(transform, vec3((2 * pos.x + size.x) / width - 1, -(2 * pos.y + size.y) / height + 1, 0.0f));
@@ -45,12 +50,42 @@ public:
 		glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
 	}
 
-	virtual void clicked(double x, double y) { // To be defined
-		pos.x += 20;
+	virtual void clicked(int x, int y) { // To be defined
+
 	}
 
-	virtual void dragged(double dx, double dy) { // For dragging self
+	virtual void dragged(int dx, int dy) { // For dragging self
 		pos.x += dx;
 		pos.y += dy;
+	}
+};
+
+class WindowBorder : public ScreenItem { // Make sure nothing else happens when clicked or dragged
+public:
+	void clicked(int x, int y) override {}
+	void dragged(int dx, int dy) override {}
+};
+
+class WindowBorderRight : public WindowBorder {
+public:
+	WindowBorderRight(GLFWwindow* parent_window) {		
+		int w, h;
+		parent = parent_window;
+		glfwGetWindowSize(parent, &w, &h);
+
+		printf("%d, %d\n", w, h);
+
+		size = vec2(2, h);
+		pos = vec2(w - 2, 0);
+
+		printf("%f, %f", size.x, size.y);
+	}
+
+	void dragged(int dx, int dy) override {
+		int w, h;
+		pos.x += dx;
+
+		glfwGetWindowSize(parent, &w, &h);
+		glfwSetWindowSize(parent, w + dx, h);
 	}
 };
